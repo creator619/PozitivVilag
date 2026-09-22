@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="hu" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PozitívVilág | A jó hírek hírportálja</title>
+  <meta name="description" content="Kizárólag pozitív, felemelő és inspiráló hírek a világ minden tájáról. Környezetvédelem, tudományos áttörések, közösségi összefogások és állatmentések egy helyen.">
+
+  <!-- Google Fonts & FontAwesome -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Canvas Confetti CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Top Announcement / Ticker Bar -->
+  <div class="ticker-bar">
+    <div class="ticker-container">
+      <span class="ticker-badge"><i class="fa-solid fa-sun"></i> Napi Pozitív Gondolat</span>
+      <div class="ticker-text" id="quote-ticker">"A kedvesség olyan nyelv, amelyet a süketek is meghallanak, és a vakok is meglátnak." – Mark Twain</div>
+      <button class="ticker-next-btn" id="next-quote-btn" title="Következő idézet"><i class="fa-solid fa-arrow-right-long"></i></button>
+    </div>
+  </div>
+
+  <!-- Main Navigation -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="#" class="brand">
+        <div class="brand-icon">
+          <i class="fa-solid fa-heart-pulse"></i>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">Pozitív<span class="brand-highlight">Világ</span></span>
+          <span class="brand-subtitle">Csupa jó hír a Földről</span>
+        </div>
+      </a>
+
+      <div class="search-box">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input type="text" id="search-input" placeholder="Keresés jó hírek között..." autocomplete="off">
+        <button id="clear-search-btn" class="clear-btn hidden" title="Törlés"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="nav-actions">
+        <button class="btn btn-boost" id="positive-boost-btn" title="Azonnali jókedv növelő">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+          <span>Pozitív Dózis</span>
+        </button>
+
+        <button class="btn btn-primary" id="submit-news-btn">
+          <i class="fa-solid fa-plus"></i>
+          <span>Jó hír beküldése</span>
+        </button>
+
+        <button class="icon-btn" id="bookmarks-toggle-btn" title="Mentett híreim">
+          <i class="fa-solid fa-bookmark"></i>
+          <span class="badge" id="bookmark-count">0</span>
+        </button>
+
+        <button class="icon-btn" id="theme-toggle" title="Téma váltása">
+          <i class="fa-solid fa-moon" id="theme-icon"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Impact Counter Banner -->
+  <section class="stats-banner">
+    <div class="stats-container">
+      <div class="stat-item">
+        <div class="stat-icon"><i class="fa-solid fa-tree"></i></div>
+        <div class="stat-info">
+          <span class="stat-value" data-target="1420500">1 420 500+</span>
+          <span class="stat-label">Új fa elültetve idén</span>
+        </div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <div class="stat-icon"><i class="fa-solid fa-hand-holding-heart"></i></div>
+        <div class="stat-info">
+          <span class="stat-value" data-target="890000">890 000+</span>
+          <span class="stat-label">Megmentett tengeri élőlény</span>
+        </div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <div class="stat-icon"><i class="fa-solid fa-bolt"></i></div>
+        <div class="stat-info">
+          <span class="stat-value" data-target="98">98%</span>
+          <span class="stat-label">Megújuló energiás csúcs</span>
+        </div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <div class="stat-icon"><i class="fa-solid fa-face-smile"></i></div>
+        <div class="stat-info">
+          <span class="stat-value" id="global-smiles-count">12 450</span>
+          <span class="stat-label">Ma szerzett mosoly</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Layout -->
+  <main class="main-container">
+
+    <!-- Hero Featured Article -->
+    <section class="hero-section" id="hero-section">
+      <!-- Dynamically filled by JS -->
+    </section>
+
+    <!-- Filters Bar (Regions & Categories) -->
+    <section class="filters-wrapper">
+      <!-- Region Selector Pills -->
+      <div class="region-selector" id="region-selector">
+        <span class="filter-label"><i class="fa-solid fa-earth-americas"></i> Régió:</span>
+        <button class="pill-btn active" data-region="all">Összes régió</button>
+        <button class="pill-btn" data-region="europa"><i class="fa-solid fa-location-dot"></i> Európa</button>
+        <button class="pill-btn" data-region="azsia"><i class="fa-solid fa-location-dot"></i> Ázsia</button>
+        <button class="pill-btn" data-region="amerika"><i class="fa-solid fa-location-dot"></i> Amerika</button>
+        <button class="pill-btn" data-region="afrika"><i class="fa-solid fa-location-dot"></i> Afrika</button>
+        <button class="pill-btn" data-region="ausztralia"><i class="fa-solid fa-location-dot"></i> Ausztrália</button>
+        <button class="pill-btn" data-region="globalis"><i class="fa-solid fa-globe"></i> Globális</button>
+      </div>
+
+      <!-- Category Filter Tabs -->
+      <div class="category-filters" id="category-filters">
+        <button class="cat-btn active" data-category="all">
+          <i class="fa-solid fa-layer-group"></i> Minden jó hír
+        </button>
+        <button class="cat-btn" data-category="kornyezt">
+          <i class="fa-solid fa-leaf"></i> Környezetvédelem
+        </button>
+        <button class="cat-btn" data-category="tudomany">
+          <i class="fa-solid fa-microscope"></i> Tudomány & Egészség
+        </button>
+        <button class="cat-btn" data-category="kozosseg">
+          <i class="fa-solid fa-people-hold"></i> Közösség & Jószívűség
+        </button>
+        <button class="cat-btn" data-category="allatvilag">
+          <i class="fa-solid fa-paw"></i> Állatvilág
+        </button>
+        <button class="cat-btn" data-category="energia">
+          <i class="fa-solid fa-solar-panel"></i> Megújuló Energia
+        </button>
+      </div>
+    </section>
+
+    <!-- Content Header with Active Title and Sort -->
+    <div class="content-header">
+      <div class="content-title">
+        <h2 id="section-heading">Legfrissebb Pozitív Hírek</h2>
+        <span class="count-badge" id="news-count-badge">0 hír</span>
+      </div>
+
+      <div class="view-options">
+        <button class="tab-btn active" id="view-all-tab">Összes Hír</button>
+        <button class="tab-btn" id="view-bookmarks-tab"><i class="fa-solid fa-bookmark"></i> Mentettek</button>
+        
+        <select id="sort-select" class="sort-dropdown">
+          <option value="latest">Legújabbak elöl</option>
+          <option value="popular">Legnépszerűbbek (reakciók)</option>
+          <option value="reading">Rövid olvasnivalók</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- News Grid -->
+    <section class="news-grid" id="news-grid">
+      <!-- Dynamically generated news cards -->
+    </section>
+
+    <!-- Empty State Fallback -->
+    <div class="empty-state hidden" id="empty-state">
+      <div class="empty-icon"><i class="fa-solid fa-sun-plant-wilt"></i></div>
+      <h3>Nem találtunk hírt a megadott feltételekkel</h3>
+      <p>Próbáld meg törölni a szűrőket vagy keresni más kulcsszóra!</p>
+      <button class="btn btn-secondary" id="reset-filters-btn">Szűrők alaphelyzetbe állítása</button>
+    </div>
+
+  </main>
+
+  <!-- Article Detail Modal -->
+  <div class="modal-overlay hidden" id="article-modal">
+    <div class="modal-container article-modal-content">
+      <button class="modal-close" id="close-article-modal"><i class="fa-solid fa-xmark"></i></button>
+
+      <div class="modal-header-img-wrapper" id="modal-img-container">
+        <img src="" alt="" id="modal-image">
+        <div class="modal-img-overlay">
+          <span class="badge badge-category" id="modal-category"></span>
+          <span class="badge badge-region" id="modal-region"></span>
+        </div>
+      </div>
+
+      <div class="modal-body">
+        <div class="article-meta">
+          <span><i class="fa-regular fa-calendar"></i> <span id="modal-date"></span></span>
+          <span><i class="fa-regular fa-clock"></i> <span id="modal-readtime"></span> min olvasás</span>
+          <span><i class="fa-solid fa-location-dot"></i> <span id="modal-location"></span></span>
+        </div>
+
+        <h1 id="modal-title"></h1>
+        <p class="article-lead" id="modal-lead"></p>
+
+        <div class="article-full-text" id="modal-fulltext">
+          <!-- Paragraphs inserted dynamically -->
+        </div>
+
+        <div class="tags-container" id="modal-tags">
+          <!-- Tags inserted dynamically -->
+        </div>
+
+        <!-- Interactive Reactions Section -->
+        <div class="reactions-box">
+          <h3>Hogyan érintett ez a hír? Küldj egy reakciót!</h3>
+          <div class="reactions-grid">
+            <button class="reaction-btn" data-reaction="love">
+              <span class="reaction-emoji">❤️</span>
+              <span class="reaction-label">Remény</span>
+              <span class="reaction-count" id="count-love">0</span>
+            </button>
+            <button class="reaction-btn" data-reaction="celebrate">
+              <span class="reaction-emoji">🎉</span>
+              <span class="reaction-label">Ünneplés</span>
+              <span class="reaction-count" id="count-celebrate">0</span>
+            </button>
+            <button class="reaction-btn" data-reaction="inspiring">
+              <span class="reaction-emoji">🌟</span>
+              <span class="reaction-label">Inspiráló</span>
+              <span class="reaction-count" id="count-inspiring">0</span>
+            </button>
+            <button class="reaction-btn" data-reaction="applause">
+              <span class="reaction-emoji">👏</span>
+              <span class="reaction-label">Gratuláció</span>
+              <span class="reaction-count" id="count-applause">0</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Good Vibes Comments / Notes -->
+        <div class="good-vibes-section">
+          <h3><i class="fa-solid fa-comments"></i> Pozitív gondolatok a közösségtől</h3>
+          <div class="comment-input-box">
+            <input type="text" id="comment-input" placeholder="Írj egy kedves gondolatot erről a hírről...">
+            <button class="btn btn-primary" id="post-comment-btn">Küldés</button>
+          </div>
+          <div class="comments-list" id="modal-comments-list">
+            <!-- Dynamic comments -->
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="modal-bookmark-btn">
+          <i class="fa-regular fa-bookmark"></i> Mentés a kedvencekhez
+        </button>
+        <button class="btn btn-primary" id="modal-share-btn">
+          <i class="fa-solid fa-share-nodes"></i> Hír megosztása
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Submit Good News Modal -->
+  <div class="modal-overlay hidden" id="submit-modal">
+    <div class="modal-container">
+      <button class="modal-close" id="close-submit-modal"><i class="fa-solid fa-xmark"></i></button>
+      
+      <div class="modal-header">
+        <div class="modal-icon"><i class="fa-solid fa-paper-plane"></i></div>
+        <h2>Küldj be egy Pozitív Hírt!</h2>
+        <p>Tudsz egy jó történetről a környezetedben vagy a nagyvilágban? Osszd meg velünk!</p>
+      </div>
+
+      <form id="submit-news-form">
+        <div class="form-group">
+          <label for="news-title">Hír címe *</label>
+          <input type="text" id="news-title" placeholder="Pl. Új erdősítési projekt indult a szomszédos városban" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="news-category">Kategória *</label>
+            <select id="news-category" required>
+              <option value="kornyezt">Környezetvédelem</option>
+              <option value="tudomany">Tudomány & Egészség</option>
+              <option value="kozosseg">Közösség & Jószívűség</option>
+              <option value="allatvilag">Állatvilág</option>
+              <option value="energia">Megújuló Energia</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="news-region">Régió *</label>
+            <select id="news-region" required>
+              <option value="europa">Európa</option>
+              <option value="azsia">Ázsia</option>
+              <option value="amerika">Amerika</option>
+              <option value="afrika">Afrika</option>
+              <option value="ausztralia">Ausztrália</option>
+              <option value="globalis">Globális</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="news-summary">Rövid összefoglaló *</label>
+          <input type="text" id="news-summary" placeholder="1-2 mondat a hír lényegéről" required>
+        </div>
+
+        <div class="form-group">
+          <label for="news-full">Részletes történet *</label>
+          <textarea id="news-full" rows="5" placeholder="Írd le a teljes inspiráló történetet..." required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="news-author">Neved / Beceneved (Opcionális)</label>
+          <input type="text" id="news-author" placeholder="Pl. Napsugaras Péter">
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" id="cancel-submit-btn">Mégse</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-heart"></i> Hír beküldése</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Positive Boost Modal (Random Surprise) -->
+  <div class="modal-overlay hidden" id="boost-modal">
+    <div class="modal-container boost-modal-content">
+      <button class="modal-close" id="close-boost-modal"><i class="fa-solid fa-xmark"></i></button>
+
+      <div class="boost-header">
+        <div class="sparkle-circle"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+        <h2>A mai Pozitív Dózisod!</h2>
+        <p>Egy gyors jó hír, hogy mosolyt csaljon az arcodra:</p>
+      </div>
+
+      <div class="boost-card" id="boost-card-content">
+        <!-- Filled by JS -->
+      </div>
+
+      <div class="boost-actions">
+        <button class="btn btn-boost" id="another-boost-btn">
+          <i class="fa-solid fa-rotate"></i> Kérek még egy jó hírt!
+        </button>
+        <button class="btn btn-secondary" id="read-boost-full-btn">
+          Elolvasom a teljes cikket <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-col brand-col">
+        <div class="brand">
+          <div class="brand-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+          <span class="brand-title">PozitívVilág</span>
+        </div>
+        <p class="footer-desc">Kizárólag jó hírek, emberi jóság és inspiráló emberi és természeti sikerek a világ minden sarkából.</p>
+        <div class="social-links">
+          <a href="#" title="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+          <a href="#" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+          <a href="#" title="Twitter"><i class="fa-brands fa-twitter"></i></a>
+          <a href="#" title="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+        </div>
+      </div>
+
+      <div class="footer-col">
+        <h4>Kategóriák</h4>
+        <ul>
+          <li><a href="#" data-footer-cat="kornyezt">🌿 Környezetvédelem</a></li>
+          <li><a href="#" data-footer-cat="tudomany">🔬 Tudomány & Egészség</a></li>
+          <li><a href="#" data-footer-cat="kozosseg">❤️ Közösség & Jószívűség</a></li>
+          <li><a href="#" data-footer-cat="allatvilag">🐾 Állatvilág</a></li>
+          <li><a href="#" data-footer-cat="energia">⚡ Megújuló Energia</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Régiók</h4>
+        <ul>
+          <li><a href="#" data-footer-region="europa">Európa</a></li>
+          <li><a href="#" data-footer-region="azsia">Ázsia</a></li>
+          <li><a href="#" data-footer-region="amerika">Amerika</a></li>
+          <li><a href="#" data-footer-region="afrika">Afrika</a></li>
+          <li><a href="#" data-footer-region="ausztralia">Ausztrália</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col newsletter-col">
+        <h4>Pozitív Napi Hírlevél</h4>
+        <p>Minden reggel 1 perces jó hír a fiókodba, hogy mosollyal induljon a napod.</p>
+        <form class="newsletter-form" id="newsletter-form">
+          <input type="email" placeholder="E-mail címed..." required>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i></button>
+        </form>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p>&copy; 2026 PozitívVilág – Terjesszük a jóságot és a reményt a világban!</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
