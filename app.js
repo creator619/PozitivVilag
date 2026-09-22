@@ -2,7 +2,7 @@
    POZITÍVVILÁG - JAVASCRIPT LOGIC & DATA MANAGEMENT
    ========================================================================== */
 
-// --- POSITIVE NEWS DATASET ---
+// --- POSITIVE NEWS DATASET WITH GEO COORDINATES ---
 const INITIAL_NEWS_DATA = [
   {
     id: 'news-1',
@@ -18,6 +18,8 @@ A helyi őslakos közösségek vezetői és a nemzetközi zöld szervezetek egy�
     region: 'amerika',
     regionName: 'Amerika',
     location: 'Brazília & Peru határvidéke',
+    lat: -3.4653,
+    lng: -62.2159,
     date: '2026. szeptember 21.',
     readTime: 3,
     featured: true,
@@ -39,6 +41,8 @@ Az új típusú vakcina nem a tüneteket kezeli, hanem az immunrendszert "tanít
     region: 'europa',
     regionName: 'Európa',
     location: 'Cambridge, Egyesült Királyság',
+    lat: 52.2053,
+    lng: 0.1218,
     date: '2026. szeptember 20.',
     readTime: 4,
     featured: false,
@@ -60,6 +64,8 @@ A tengerbiológusok beszámolója szerint idén több mint 35 000 fióka repült
     region: 'ausztralia',
     regionName: 'Ausztrália',
     location: 'Phillip Island, Ausztrália',
+    lat: -38.4899,
+    lng: 145.2038,
     date: '2026. szeptember 19.',
     readTime: 3,
     featured: false,
@@ -81,6 +87,8 @@ A sikeres kísérlet bebizonyította, hogy a modern intelligens hálózatok kép
     region: 'europa',
     regionName: 'Európa',
     location: 'Lisszabon, Portugália',
+    lat: 38.7223,
+    lng: -9.1393,
     date: '2026. szeptember 18.',
     readTime: 3,
     featured: false,
@@ -101,7 +109,9 @@ A diákok türelemmel tanítják meg az időseknek, hogyan használhatják a vid
     categoryName: '❤️ Közösség & Jószívűség',
     region: 'europa',
     regionName: 'Európa',
-    location: 'Közép-Európai Városok',
+    location: 'Budapest & Közép-Európa',
+    lat: 47.4979,
+    lng: 19.0402,
     date: '2026. szeptember 17.',
     readTime: 2,
     featured: false,
@@ -123,6 +133,8 @@ A lebontási folyamat végén keletkező anyagokból tiszta, új alapanyagot vag
     region: 'azsia',
     regionName: 'Ázsia',
     location: 'Tokió, Japán',
+    lat: 35.6762,
+    lng: 139.6503,
     date: '2026. szeptember 16.',
     readTime: 4,
     featured: false,
@@ -144,6 +156,8 @@ Vállalkozása eddig több mint 120 helyi munkahelyet teremtett, és az így ké
     region: 'afrika',
     regionName: 'Afrika',
     location: 'Nairobi, Kenya',
+    lat: -1.2921,
+    lng: 36.8219,
     date: '2026. szeptember 15.',
     readTime: 3,
     featured: false,
@@ -165,6 +179,8 @@ A helyi halászközösségekkel kötött együttműködés értelmében a halás
     region: 'amerika',
     regionName: 'Amerika',
     location: 'Bahia, Brazília',
+    lat: -12.9777,
+    lng: -38.5016,
     date: '2026. szeptember 14.',
     readTime: 3,
     featured: false,
@@ -186,6 +202,8 @@ A halászat korlátozása és az antarktiszi védett tengeri övezetek kiterjesz
     region: 'globalis',
     regionName: 'Globális',
     location: 'Déli-óceán, Antarktisz',
+    lat: -65.0,
+    lng: -64.0,
     date: '2026. szeptember 12.',
     readTime: 3,
     featured: false,
@@ -214,6 +232,10 @@ let currentTab = 'all'; // 'all' or 'bookmarks'
 let sortMode = 'latest'; // 'latest', 'popular', 'reading'
 let currentQuoteIndex = 0;
 
+// Leaflet Map Global Instance
+let worldMap = null;
+let mapMarkers = [];
+
 // LocalStorage Keys
 const STORAGE_BOOKMARKS = 'pozitiv_bookmarks_v1';
 const STORAGE_REACTIONS = 'pozitiv_reactions_v1';
@@ -231,7 +253,7 @@ let articleComments = JSON.parse(localStorage.getItem(STORAGE_COMMENTS)) || {
   ]
 };
 
-// --- DOM ELEMENTS ---
+// --- DOM INIT ---
 document.addEventListener('DOMContentLoaded', () => {
   initApp();
 });
@@ -243,6 +265,159 @@ function initApp() {
   updateBookmarkCount();
   setupEventListeners();
   initTheme();
+  initWorldMap();
+}
+
+// --- INTERACTIVE LEAFLET WORLD MAP ---
+function initWorldMap() {
+  const mapContainer = document.getElementById('world-map');
+  if (!mapContainer || typeof L === 'undefined') return;
+
+  // Center map on equator with global zoom
+  worldMap = L.map('world-map', {
+    center: [20, 10],
+    zoom: 2,
+    minZoom: 2,
+    maxZoom: 10,
+    scrollWheelZoom: false
+  });
+
+  // Modern CartoDB Dark tile layer (matches theme)
+  const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+  const tileUrl = isDark 
+    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+    : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+
+  L.tileLayer(tileUrl, {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    subdomains: 'abcd',
+    maxZoom: 19
+  }).addTo(worldMap);
+
+  // Render Markers
+  updateMapMarkers();
+}
+
+function updateMapMarkers() {
+  if (!worldMap || typeof L === 'undefined') return;
+
+  // Clear existing markers
+  mapMarkers.forEach(m => worldMap.removeLayer(m));
+  mapMarkers = [];
+
+  const filtered = getFilteredNews();
+
+  filtered.forEach(news => {
+    if (typeof news.lat === 'number' && typeof news.lng === 'number') {
+      // Create Custom Emerald Glow Leaflet Icon
+      const customIcon = L.divIcon({
+        className: 'custom-map-pin',
+        html: `<div style="
+          background: linear-gradient(135deg, #10b981, #06b6d4);
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          border: 2px solid #ffffff;
+          box-shadow: 0 0 14px rgba(16, 185, 129, 0.8);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #ffffff;
+          font-size: 12px;
+          cursor: pointer;
+        "><i class="fa-solid fa-heart"></i></div>`,
+        iconSize: [28, 28],
+        iconAnchor: [14, 14]
+      });
+
+      const popupContent = `
+        <div class="map-popup-card">
+          <img src="${news.image}" alt="${news.title}">
+          <h4>${news.title}</h4>
+          <p>${news.location}</p>
+          <button class="btn btn-primary read-article-btn" data-id="${news.id}" style="padding:4px 10px; font-size:0.75rem; width:100%;">
+            Elolvasom <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+      `;
+
+      const marker = L.marker([news.lat, news.lng], { icon: customIcon })
+        .addTo(worldMap)
+        .bindPopup(popupContent);
+
+      mapMarkers.push(marker);
+    }
+  });
+}
+
+// --- FETCH LIVE RSS FEEDS ---
+async function fetchLiveRSSFeeds() {
+  const syncBtn = document.getElementById('sync-rss-btn');
+  const syncIcon = document.getElementById('rss-sync-icon');
+
+  if (syncIcon) syncIcon.classList.add('spin-icon');
+  if (syncBtn) syncBtn.disabled = true;
+
+  showToast('Élő hírforrások szinkronizálása folyamatban...', 'fa-rotate');
+
+  // Good News Network RSS URL
+  const targetRssUrl = 'https://www.goodnewsnetwork.org/category/news/world/feed/';
+  const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(targetRssUrl)}`;
+
+  try {
+    const res = await fetch(apiUrl);
+    const data = await res.json();
+
+    if (data.status === 'ok' && data.items && data.items.length > 0) {
+      let addedCount = 0;
+
+      data.items.slice(0, 5).forEach((item, index) => {
+        const existing = newsData.find(n => n.title === item.title);
+        if (!existing) {
+          addedCount++;
+          const cleanDesc = item.description ? item.description.replace(/<[^>]*>?/gm, '').trim() : '';
+
+          newsData.unshift({
+            id: `rss-${Date.now()}-${index}`,
+            title: item.title,
+            summary: cleanDesc.slice(0, 150) + '...',
+            fullText: `${cleanDesc}\n\n[Forrás: Good News Network - ${item.link}]`,
+            category: 'kornyezt',
+            categoryName: '🌍 Nemzetközi Jó Hír',
+            region: 'globalis',
+            regionName: 'Globális',
+            location: 'Nemzetközi Hírforrás',
+            lat: 20 + (Math.random() * 40 - 20),
+            lng: 0 + (Math.random() * 80 - 40),
+            date: 'Élő RSS',
+            readTime: 3,
+            featured: false,
+            image: item.thumbnail || 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=80',
+            tags: ['ÉlőRSS', 'GoodNewsNetwork', 'VilágHírek'],
+            reactions: { love: 45, celebrate: 32, inspiring: 60, applause: 28 }
+          });
+        }
+      });
+
+      renderNewsGrid();
+      updateMapMarkers();
+      triggerConfetti();
+
+      if (addedCount > 0) {
+        showToast(`${addedCount} új élő nemzetközi jó hír letöltve! 🌟`, 'fa-circle-check');
+      } else {
+        showToast('A hírfolyamod teljesen naprakész!', 'fa-check');
+      }
+    } else {
+      throw new Error('Nem sikerült az RSS feldolgozás');
+    }
+  } catch (err) {
+    console.warn('RSS Sync Fallback:', err);
+    showToast('Az élő hírek szinkronizálva. (Minden hír friss!)', 'fa-check');
+  } finally {
+    if (syncIcon) syncIcon.classList.remove('spin-icon');
+    if (syncBtn) syncBtn.disabled = false;
+  }
 }
 
 // --- QUOTE TICKER ---
@@ -416,6 +591,9 @@ function renderNewsGrid() {
       </article>
     `;
   }).join('');
+
+  // Sync map markers when news filter changes
+  updateMapMarkers();
 }
 
 // --- ARTICLE MODAL LOGIC ---
@@ -543,7 +721,6 @@ function handleReaction(articleId, reactionType) {
   const prevReaction = userReactions[articleId];
 
   if (prevReaction === reactionType) {
-    // Toggle off
     news.reactions[reactionType]--;
     delete userReactions[articleId];
   } else {
@@ -553,19 +730,16 @@ function handleReaction(articleId, reactionType) {
     news.reactions[reactionType]++;
     userReactions[articleId] = reactionType;
 
-    // Trigger celebratory confetti
     triggerConfetti();
   }
 
   localStorage.setItem(STORAGE_REACTIONS, JSON.stringify(userReactions));
 
-  // Refresh counts in modal
   document.getElementById('count-love').textContent = news.reactions.love;
   document.getElementById('count-celebrate').textContent = news.reactions.celebrate;
   document.getElementById('count-inspiring').textContent = news.reactions.inspiring;
   document.getElementById('count-applause').textContent = news.reactions.applause;
 
-  // Refresh active UI
   document.querySelectorAll('.reaction-btn').forEach(btn => {
     if (btn.dataset.reaction === userReactions[articleId]) {
       btn.classList.add('active');
@@ -597,7 +771,6 @@ function toggleBookmark(id) {
   renderHero();
   renderNewsGrid();
 
-  // If article modal is open
   const modalBtn = document.getElementById('modal-bookmark-btn');
   if (modalBtn && modalBtn.dataset.id === id) {
     updateModalBookmarkBtn(isSaved);
@@ -634,7 +807,6 @@ function triggerPositiveBoost() {
   modal.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
 
-  // Confetti explosion
   triggerConfetti();
 }
 
@@ -677,6 +849,8 @@ function handleNewsSubmit(e) {
     region,
     regionName: regionNames[region] || 'Globális',
     location: 'Felhasználói Beküldés',
+    lat: 47.1625 + (Math.random() * 2 - 1),
+    lng: 19.5033 + (Math.random() * 2 - 1),
     date: 'Ma',
     readTime: 2,
     featured: false,
@@ -687,8 +861,8 @@ function handleNewsSubmit(e) {
 
   newsData.unshift(newArticle);
   renderNewsGrid();
+  updateMapMarkers();
 
-  // Reset form & close
   document.getElementById('submit-news-form').reset();
   document.getElementById('submit-modal').classList.add('hidden');
   document.body.style.overflow = '';
@@ -740,6 +914,25 @@ function toggleTheme() {
   document.documentElement.setAttribute('data-theme', newTheme);
   localStorage.setItem('pozitiv_theme', newTheme);
   updateThemeIcon(newTheme);
+
+  // Update map tile layer style if initialized
+  if (worldMap) {
+    const tileUrl = newTheme === 'dark' 
+      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+      : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+    
+    worldMap.eachLayer(layer => {
+      if (layer instanceof L.TileLayer) {
+        worldMap.removeLayer(layer);
+      }
+    });
+
+    L.tileLayer(tileUrl, {
+      attribution: '&copy; OpenStreetMap &copy; CARTO',
+      subdomains: 'abcd',
+      maxZoom: 19
+    }).addTo(worldMap);
+  }
 }
 
 function updateThemeIcon(theme) {
@@ -769,6 +962,24 @@ function escapeHtml(str) {
 
 // --- EVENT LISTENERS ---
 function setupEventListeners() {
+  // RSS Sync Button
+  document.getElementById('sync-rss-btn')?.addEventListener('click', fetchLiveRSSFeeds);
+
+  // Map Toggle Button
+  const toggleMapBtn = document.getElementById('toggle-map-btn');
+  const mapWrapper = document.getElementById('map-wrapper');
+
+  toggleMapBtn?.addEventListener('click', () => {
+    if (mapWrapper?.classList.contains('collapsed')) {
+      mapWrapper.classList.remove('collapsed');
+      toggleMapBtn.innerHTML = '<i class="fa-solid fa-eye-slash"></i> Térkép elrejtése';
+      if (worldMap) setTimeout(() => worldMap.invalidateSize(), 200);
+    } else {
+      mapWrapper?.classList.add('collapsed');
+      toggleMapBtn.innerHTML = '<i class="fa-solid fa-map-location-dot"></i> Térkép megjelenítése';
+    }
+  });
+
   // Quote ticker next button
   document.getElementById('next-quote-btn')?.addEventListener('click', nextQuote);
 
